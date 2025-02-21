@@ -8,6 +8,8 @@ library(rgu34acdf)
 library(rgu34a.db)
 library(mouse4302.db)
 library(mouse4302cdf)
+library(rat2302cdf)
+library(rat2302.db)
 
 ## Data was downloaded using getGEOSuppFiles()
 ##-----------------------------------------------------------------------------------------------
@@ -357,7 +359,7 @@ mtext("7 Days to 60 Days", side = 3, line = 4.3, font = 2, cex = 1.2)
 
 ##-------------------------------------------------------------------------------------------------------------
 
-## GSE47752
+## GSE213393
 gse <- read.csv("GSE213393/GSE213393_geneCounts.tsv", sep = "\t") ## Load stored data
 rownames(gse) <- gse$Geneid
 gse <- gse[,-1]
@@ -423,10 +425,137 @@ colours <- c(rep(c(rep(c(df$Colour[2], "#FFFFFF00"), 2),
              rep(c(rep(c(df$Colour[3], "#FFFFFF00"), 2), 
                    rep(c("green", "#FFFFFF00"), 2)), 2),
              rep(c(rep(c(df$Colour[5], "#FFFFFF00"), 2), 
-                   rep(c("green", "#FFFFFF00"), 2)), 2))
+                   rep(c("green", "#FFFFFF00"), 2)), 2)) ## Green = Controls
 par(mar = c(5, 4, 6, 2))
 plot(PC$x[,1],PC$x[,2],cex=1.2,bg=colours,
      xlab=paste0("PC1 (", round(varexpl[1], 2), "%)"),
      ylab=paste0("PC2 (", round(varexpl[2], 2), "%)"),
      pch=25,main="",las=1, col = c("black", "#FFFFFF00"),
 )
+
+## Ipsilateral samples only
+colours <- c(rep(c(rep(c("#FFFFFF00", df$Colour[2]), 2), 
+                   rep(c("#FFFFFF00", "green"), 2)), 2), 
+             rep(c(rep(c("#FFFFFF00", df$Colour[3]), 2), 
+                   rep(c("#FFFFFF00", "green"), 2)), 2),
+             rep(c(rep(c("#FFFFFF00", df$Colour[5]), 2), 
+                   rep(c("#FFFFFF00", "green"), 2)), 2)) ## Green = Controls
+par(mar = c(5, 4, 6, 2))
+plot(PC$x[,1],PC$x[,2],cex=1.2,bg=colours,
+     xlab="", xaxt = "n",
+     ylab=paste0("PC2 (", round(varexpl[2], 2), "%)"),
+     pch=22,main="",las=1, col = c("#FFFFFF00", "black")
+)
+axis(3)
+mtext(paste0("PC1 (", round(varexpl[1], 2), "%)"), side = 3, line = 3)
+mtext("3 Days to 14 Days", side = 3, line = 4.3, font = 2, cex = 1.2)
+
+##-------------------------------------------------------------------------------------------
+
+## GSE47752
+gse <- getGEO("GSE47752")
+names <- pData(gse[[1]])$title
+cels = list.files("GSE47752/data/", pattern = "CEL") ## Data stored locally
+raw.data <- ReadAffy(verbose = FALSE, 
+                     filenames = paste("GSE47752/data", cels, sep = "/"),
+                     cdfname = "rat2302cdf") ## Load microarray data
+data.rma.norm <- affy::rma(raw.data)
+gse <- exprs(data.rma.norm)
+gse <- data.frame(gse)
+
+## Make labels shorter and readable
+colnames(gse) <- names
+gse <- gse[,grep("kainate", colnames(gse))]
+foo <- function(x){
+  strsplit(x, "-")
+}
+a <- lapply(colnames(gse), foo)
+for(i in 1:length(a)) {
+  colnames(gse)[i] <- paste0(a[[i]][[1]][[3]], 
+                             a[[i]][[1]][[4]],
+                             a[[i]][[1]][[5]])
+}
+colnames(gse) <- gsub("Nadler", "N.", colnames(gse))
+colnames(gse) <- gsub("Wadman", "W.", colnames(gse))
+colnames(gse) <- gsub("day ", "", colnames(gse))
+colnames(gse) <- gsub("control", "C", colnames(gse))
+colnames(gse) <- gsub("rat ", ".", colnames(gse))
+colnames(gse) <- gsub("day", "", colnames(gse))
+gse <- gse[,-7]
+gse$N.3.5 <- apply(gse[,grep("N.3.5", colnames(gse))], 1, mean) ## Multiple recordings from the same sample
+gse <- gse[,order(colnames(gse))] ## Order columns for easier downstream analysis
+gse <- gse[,-18]
+
+## Run PCA
+vargene <- apply(gse, 1, var)
+names(vargene) <- rownames(gse)
+vars <- sort(vargene,decreasing=T)
+topgenes <- names(vars)[1:1000]
+filtered <- gse[rownames(gse) %in% topgenes,]
+PC <- prcomp(t(filtered))
+varexpl <- (PC$sdev^2)/sum(PC$sdev^2)*100
+
+## Plot PCA
+dev.new(width=20, height=20)
+colors <- c(
+  "#000080",  # Navy Blue
+  "#00FFFF",  # Sky Blue
+  "#e1c4ff",  # Lilac
+  "#9B30FF",  # Purple
+  "#FF3333",  # Red
+  "#FF9933",  # Light orange
+  "#FFFF00"   # Bright yellow
+)
+df <- data.frame(Colour = colors,
+                 Time = c("1d", "3d", "7d",
+                          "10d", "14d", "28d", "60d"))
+colours <- rep(c(df$Colour[c(1,2,4)],"green"), 2, each = 6) ## Green = Controls
+plot(PC$x[,2],PC$x[,1],cex=1.2,bg=colours,
+     xlab=paste0("PC2 (", round(varexpl[2], 2), "%)"),
+     ylab=paste0("PC1 (", round(varexpl[1], 2), "%)"),
+     main="1 Day to 10 Days",las=1, pch=rep(21,each = 48)
+)
+
+##-----------------------------------------------------------------------------------------------
+
+## Plot legends
+plot(NULL ,xaxt='n',yaxt='n',bty='n',ylab='',xlab='', xlim=0:1, ylim=0:1) ## Empty plot
+colors <- c(
+  "#000080",  # Navy Blue
+  "#1E90FF",  # Dodger Blue (lighter blue)
+  "#87CEEB",  # Sky Blue
+  "#e1c4ff",  # Lilac
+  "#9B30FF",  # Purple
+  "#FF3333",  # Red
+  "#FF9933",  # Light orange
+  "#FFFF00"  # Bright yellow
+)
+legend("topleft", pt.bg=c("green",unique(colors[1:6])), legend = c("Control",
+                                      "1h","4h","6h", "8h",
+                                      "12h", "24h"),
+       
+       pch = 21, cex=1, col = "black")
+legend("top", pt.bg=c("green",unique(colors[c(1,3,6:8)])), legend = c("Control",
+                                                                   "1h","6h","24h",
+                                                                   "3d", "10d"),
+       
+       pch = 21, cex=1, col = "black")
+
+colors <- c(
+  "#000080",  # Navy Blue
+  "#00FFFF",  # Sky Blue
+  "#e1c4ff",  # Lilac
+  "#9B30FF",  # Purple
+  "#FF3333",  # Red
+  "#FF9933",  # Light orange
+  "#FFFF00"  # Bright yellow
+)
+legend("bottomleft", pt.bg=c("green",unique(colors)), 
+       legend = c("Control", 
+                  "1d", "3d", "7d",
+                  "10d", "14d", "28d", "60d"),
+       
+       pch = 21, cex=1, col = "black")
+legend("bottom", pt.bg="white",
+       legend = c("Ipsilateral", "Contralateral"),
+       pch = c(22,25), cex=1)

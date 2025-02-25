@@ -274,6 +274,7 @@ ggplot(gene.counts, aes(fill=dataset, y=Genes, x=time)) +
 ##----------------------------------------------------------------------------------------
 
 ## Plot number of immune-related DEGs
+## Get all genes related to immune functions 
 go <- c(unlist(get("GO:0002376", GOBPCHILDREN)), 
         unlist(get("GO:0016032", GOBPCHILDREN)),
         unlist(get("GO:0001816", GOBPCHILDREN))) 
@@ -283,7 +284,6 @@ while(length(prevgo)!=length(go)) {
   go <- c(go, unlist(lapply(unlist(go), function(x) get(x, GOBPCHILDREN))))
   go <- unique(unname(na.omit(go)))
 } ## This routine takes a while
-immune <- unique(unname(go))
 g <- unique(c(AnnotationDbi::select(org.Mm.eg.db, 
                                     c(go), 
                                     "ENTREZID", "GO")$ENTREZID,
@@ -340,4 +340,31 @@ up <- DEgenes[DEgenes$logfc>0,]
 reg <- c("up", "down")
 
 for (regulation in reg) {
+   # Define the target time point and the number of datasets (N)
+  df <- eval(parse(text=regulation))
+  for (time in unique(DEgenes$time)) {
+    time.point <- time
+    ndatasets <- length(unique(DEgenes$dataset[DEgenes$time==time])/2
+    if (ndatasets < 1) break
+    if (ndatasets = 1) ndatasets <- 2
+    ndatasets <- ceiling(ndatasets)
+
+  # Filter and group the data
+  result <- df %>%
+    filter(time == time.point) %>%
+    group_by(entrez) %>%
+    summarise(dataset_count = n_distinct(dataset)) %>%
+    filter(dataset_count >= ndatasets) %>%
+    nrow()
+
+ unique_genes_count <- df %>%
+   filter(time == time_point_T) %>%
+   summarise(unique_genes = n_distinct(entrez)) %>%
+   pull(unique_genes)
  
+ # Print the result
+ print(paste(regulation, time.point)
+ print(unique_genes_count)
+ print(result)
+       }
+       }

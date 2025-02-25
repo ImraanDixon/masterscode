@@ -7,6 +7,7 @@ library(RColorBrewer)
 library(pheatmap)
 library(dendextend)
 
+## Expression values are log fold change derived from the files produced using DE_analysis()
 ##----------------------------------------------------------------------------------
 
 genesofinterest <- function(x = unique(c(keys(org.Mm.eg.db, "SYMBOL"), 

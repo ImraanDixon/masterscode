@@ -14,7 +14,9 @@ library(rat2302.db)
 library(org.Mm.eg.db)
 library(AnnotationDbi)
 
-## 
+## Data was downloaded using getGEOSuppFiles()
+## First, run contrasts to determine differential expression
+## Then, gene expression can be plotted using plot_expression.R
 ##-------------------------------------------------------------------------------------
 
 ## GSE1831

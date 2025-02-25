@@ -332,7 +332,7 @@ ggplot(gene.counts, aes(fill=dataset, y=Genes, x=time)) +
 ## Counting DEG overlaps
 DEgenes <- rbind(DEgenes.mouse, DEgenes.rat)
 DEgenes$unique <- paste(DEgenes$entrez, DEgenes$dataset, DEgenes$time) ## A unique identifier so that only duplicate genes at the same time in the same
-                                                                       ## dataset are deleted
+## dataset are deleted
 DEgenes <- DEgenes[!duplicated(DEgenes$unique),] ## Remove duplicated genes
 down <- DEgenes[DEgenes$logfc<0,]
 up <- DEgenes[DEgenes$logfc>0,]
@@ -340,31 +340,32 @@ up <- DEgenes[DEgenes$logfc>0,]
 reg <- c("up", "down")
 
 for (regulation in reg) {
-   # Define the target time point and the number of datasets (N)
   df <- eval(parse(text=regulation))
   for (time in unique(DEgenes$time)) {
     time.point <- time
-    ndatasets <- length(unique(DEgenes$dataset[DEgenes$time==time])/2
-    if (ndatasets < 1) break
-    if (ndatasets = 1) ndatasets <- 2
-    ndatasets <- ceiling(ndatasets)
-
-  # Filter and group the data
-  result <- df %>%
-    filter(time == time.point) %>%
-    group_by(entrez) %>%
-    summarise(dataset_count = n_distinct(dataset)) %>%
-    filter(dataset_count >= ndatasets) %>%
-    nrow()
-
- unique_genes_count <- df %>%
-   filter(time == time_point_T) %>%
-   summarise(unique_genes = n_distinct(entrez)) %>%
-   pull(unique_genes)
- 
- # Print the result
- print(paste(regulation, time.point)
- print(unique_genes_count)
- print(result)
-       }
-       }
+    ndatasets <- length(unique(DEgenes$dataset[DEgenes$time==time]))/2
+                        if (ndatasets < 1) next
+                        if (ndatasets == 1) ndatasets <- 2
+                        ndatasets <- ceiling(ndatasets)
+                        
+                        ## Filter and group the data
+                        result <- df %>%
+                          filter(time == time.point) %>%
+                          group_by(entrez) %>%
+                          summarise(dataset_count = n_distinct(dataset)) %>%
+                          filter(dataset_count >= ndatasets) %>%
+                          nrow()
+                        
+                        unique_genes_count <- df %>%
+                          filter(time == time.point) %>%
+                          summarise(unique_genes = n_distinct(entrez)) %>%
+                          pull(unique_genes)
+                        
+                        ## Print the result
+                        print(paste(regulation, time.point))
+                              print(unique_genes_count)
+                              print(result)
+                        cat("\n")
+    ## The percentage of overlapping DEGs were graphed with Microsoft Excel
+  }
+}

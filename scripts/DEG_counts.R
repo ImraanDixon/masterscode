@@ -343,9 +343,9 @@ for (regulation in reg) {
   df <- eval(parse(text=regulation))
   for (time in unique(DEgenes$time)) {
     time.point <- time
-    ndatasets <- length(unique(DEgenes$dataset[DEgenes$time==time]))/2
-                        if (ndatasets < 1) next
-                        if (ndatasets == 1) ndatasets <- 2
+    ndatasets <- length(unique(DEgenes$dataset[DEgenes$time==time]))/2 ## At least half of the datasets
+                        if (ndatasets < 1) next ## If there is only one dataset at that time, skip
+                        if (ndatasets == 1) ndatasets <- 2 ## If there are only two datasets at that time, aim for DEGs in both datasets
                         ndatasets <- ceiling(ndatasets)
                         
                         ## Filter and group the data
@@ -363,8 +363,8 @@ for (regulation in reg) {
                         
                         ## Print the result
                         print(paste(regulation, time.point))
-                              print(unique_genes_count)
-                              print(result)
+                              print(unique_genes_count) ## Total unique genes at time point
+                              print(result) ## Number of DEGs present in the majority of the datasets
                         cat("\n")
     ## The percentage of overlapping DEGs were graphed with Microsoft Excel
   }
